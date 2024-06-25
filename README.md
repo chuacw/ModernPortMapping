@@ -1,1 +1,1 @@
-Demonstrates how to open u
+Demonstrates how to open up ports on the router.
