@@ -16,13 +16,30 @@
 
 // let debug = require('debug'); doesn't work
 import DebugSetup from 'debug';
-const NatAPI = await import('@silentbot1/nat-api'); // this is a module
+import { _pmpMapFix } from './upmpmap_fix.ts';
+
+// First pattern
+// const NatAPI = await import('@silentbot1/nat-api'); // this is a module, working
+// const client = new NatAPI.default({ enablePMP: true, enableUPNP: true });
+
+// Second pattern
+// import NatAPI from '@silentbot1/nat-api';
+// const client = new NatAPI({ enablePMP: true, enableUPNP: true });
+
+// Third pattern
+const NatAPI = (await import('@silentbot1/nat-api')).default; // this is a module, working
+const client = new NatAPI({ enablePMP: true, enableUPNP: true });
+
+// Fix description in PMP
+// client._timeout = 6500000;
+// client._pmpMap = _pmpMapFix.bind(client);
+// client.enablePMP = true;
+// client.enableUPNP = true; // for remapping _pmpMap
 
 DebugSetup.enable('nat-pmp,nat-api,nat-upnp');
 DebugSetup.log = console.debug;
 
 // For NAT-PMP + NAT-UPNP, use:
-const client = new NatAPI.default({ enablePMP: true, enableUPNP: true });
 
 let externalIp: string = await client.externalIp(); 
 
@@ -36,25 +53,32 @@ let externalIp: string = await client.externalIp();
 
 console.log("The external IP is: ", externalIp);
 // await client.map(1000, 1000); // alternative 1
-let udpOptions = {protocol: 'udp', ttl: 3600, description: 'UDP forwarding for nat_forwarding', publicPort: 55000, privatePort: 55000};
-let udpmapping = await client.map(udpOptions);
-let tcpmapping = udpmapping;
-let tcpOptions = {...udpOptions, protocol: 'tcp', description: 'TCP forwarding for nat_forwarding'};
-if (udpmapping) {
-    tcpmapping = await client.map(tcpOptions);
+
+// Pattern 1 to port mapping
+// let udpOptions = {protocol: 'udp', ttl: 3600, description: 'UDP forwarding for nat_forwarding', publicPort: 55000, privatePort: 55000};
+// let udpmapping = await client.map(udpOptions);
+// let tcpmapping = udpmapping;
+// let tcpOptions = {...udpOptions, protocol: 'tcp', description: 'TCP forwarding for nat_forwarding'};
+// if (udpmapping) {
+//     tcpmapping = await client.map(tcpOptions);
+// }
+// if (udpmapping) {
+//     console.log(`UDP successfully mapped on: ${udpOptions.publicPort} to ${udpOptions.privatePort}`);
+// }
+// if (tcpmapping) {
+//     console.log(`TCP successfully mapped on: ${udpOptions.publicPort} to ${udpOptions.privatePort}`);
+// }
+
+// Pattern 2 to port mapping
+let mappingOptions = {ttl: 3600, description: 'UDP forwarding for nat_forwarding', publicPort: 55000, privatePort: 55000};
+let portMapping = await client.map(mappingOptions);
+if (portMapping) {
+    console.log(`UDP and TCP successfully mapped on: ${mappingOptions.publicPort} to ${mappingOptions.privatePort}`);
 }
-if (udpmapping) {
-    console.log(`UDP successfully mapped on: ${udpOptions.publicPort} to ${udpOptions.privatePort}`);
-}
-if (tcpmapping) {
-    console.log(`TCP successfully mapped on: ${udpOptions.publicPort} to ${udpOptions.privatePort}`);
-}
+
 console.log("Now's your chance to view the router's configuration")
-if (udpmapping) {
-    await client.unmap(udpOptions.publicPort);
-}
-if (tcpmapping) {
-    await client.unmap(tcpOptions.publicPort);
+if (portMapping) {
+    await client.unmap(mappingOptions.publicPort, mappingOptions.privatePort);
 }
 console.log("View router configuration again please...");
 console.log("And we're done!!!");
