@@ -1,0 +1,29 @@
+{
+  "name": "ModernPortMapping",
+  "version": "1.0.0",
+  "description": "Port mapping with UPNP",
+  "main": "index.js",
+  "type": "module",
+  "author": "Chee-Wee Chua",
+  "scripts": {
+    "build": "tsc",
+    "debug": "ts-node nat_forward.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@silentbot1/nat-api": "^0.4.7",
+    "@types/node": "^20.14.8",
+    "nat-upnp": "^1.1.1",
+    "node-ssdp": "^4.0.1"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.2"
+  },
+  "engines": {
+    "node": ">=16.20.2"
+  }
+}
