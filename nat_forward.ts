@@ -14,9 +14,15 @@
 
 // https://www.npmjs.com/package/@silentbot1/nat-api
 
+const BittorrentProtocol = (await import("bittorrent-protocol")).default; 
+const MagnetUri = (await import('magnet-uri'));
+function getInfoHash(magnetURI: string): string {
+    const parsed = MagnetUri.decode(magnetURI);
+    return parsed.infoHash!;
+}
+  
 // let debug = require('debug'); doesn't work
 import DebugSetup from 'debug';
-import { _pmpMapFix } from './upmpmap_fix.ts';
 
 // First pattern
 // const NatAPI = await import('@silentbot1/nat-api'); // this is a module, working
@@ -31,6 +37,7 @@ const NatAPI = (await import('@silentbot1/nat-api')).default; // this is a modul
 const client = new NatAPI({ enablePMP: true, enableUPNP: true });
 
 // Fix description in PMP
+// import { _pmpMapFix } from './upmpmap_fix.ts';
 // client._timeout = 6500000;
 // client._pmpMap = _pmpMapFix.bind(client);
 // client.enablePMP = true;
@@ -40,18 +47,9 @@ DebugSetup.enable('nat-pmp,nat-api,nat-upnp');
 DebugSetup.log = console.debug;
 
 // For NAT-PMP + NAT-UPNP, use:
+// let externalIp: string = await client.externalIp(); 
+// console.log("The external IP is: ", externalIp);
 
-let externalIp: string = await client.externalIp(); 
-
-// Get external IP, the following code works
-// client.externalIp().then((ip: string) => {
-//     console.log('External IP:', ip)
-//     externalIp = ip;
-// }).catch((err: any) => {
-//     return console.log('Error', err)
-// });
-
-console.log("The external IP is: ", externalIp);
 // await client.map(1000, 1000); // alternative 1
 
 // Pattern 1 to port mapping
@@ -70,15 +68,25 @@ console.log("The external IP is: ", externalIp);
 // }
 
 // Pattern 2 to port mapping
-let mappingOptions = {ttl: 3600, description: 'UDP forwarding for nat_forwarding', publicPort: 55000, privatePort: 55000};
+let mappingOptions = {ttl: 3600, description: 'Port mapping for nat_forwarding', publicPort: 55000, privatePort: 55000};
 let portMapping = await client.map(mappingOptions);
 if (portMapping) {
     console.log(`UDP and TCP successfully mapped on: ${mappingOptions.publicPort} to ${mappingOptions.privatePort}`);
 }
 
-console.log("Now's your chance to view the router's configuration")
+console.log("Now's your last chance to view the router's configuration")
+
+const magnetURI = 'magnet:?xt=urn:btih:e3811b9539cacff680e418124272177c47477157';
+const peer = { host: '127.0.0.1', port: 55165 }; // Replace with actual peer address
+
+const infoHash = getInfoHash(magnetURI);
+console.log('infohash is: ', infoHash);
+
+console.log("View router configuration again please...");
+console.log("And we're done!!!");
+
 if (portMapping) {
     await client.unmap(mappingOptions.publicPort, mappingOptions.privatePort);
 }
-console.log("View router configuration again please...");
-console.log("And we're done!!!");
+
+process.exit(0);
